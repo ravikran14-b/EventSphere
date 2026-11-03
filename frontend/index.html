@@ -3,311 +3,1099 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EventSphere | Flash-Sale Concert Ticketing</title>
+  <title>EventSphere | Book Live Concerts, Music Festivals & Arena Shows</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0b0f19;
-      --card: #151c2c;
-      --border: #263147;
-      --primary: #0072ce;
-      --accent: #e21937;
+      --bms-red: #f84464;
+      --bms-red-dark: #d82b4a;
+      --bms-navy: #1f2533;
+      --bms-darker: #12151f;
+      --bg-main: #0f1219;
+      --card-bg: #1a1f2e;
+      --card-hover: #22283a;
+      --border: #2c344b;
+      --text-primary: #ffffff;
+      --text-secondary: #94a3b8;
       --success: #10b981;
-      --warn: #f59e0b;
-      --text: #f1f5f9;
-      --muted: #94a3b8;
+      --warning: #f59e0b;
+      --blue: #0072ce;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
-    body { background: var(--bg); color: var(--text); line-height: 1.5; padding-bottom: 60px; }
-    header {
-      background: #0f1624; border-bottom: 1px solid var(--border);
-      padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
     }
-    .brand { font-size: 1.4rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
-    .brand span { background: var(--primary); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; }
-    .health-bar { display: flex; gap: 8px; flex-wrap: wrap; }
-    .badge {
-      font-size: 0.75rem; padding: 4px 10px; border-radius: 999px;
-      background: #1e293b; border: 1px solid var(--border); color: var(--muted);
+
+    /* Microservice Telemetry Ribbon */
+    .devops-ribbon {
+      background: #090b10;
+      border-bottom: 1px solid #1e2436;
+      padding: 6px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.75rem;
+      flex-wrap: wrap;
+      gap: 10px;
     }
-    .badge.up { border-color: var(--success); color: var(--success); }
-    .badge.down { border-color: var(--accent); color: var(--accent); }
-    .container { max-width: 1200px; margin: 28px auto; padding: 0 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
-    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
-    h2 { font-size: 1.2rem; margin-bottom: 14px; color: #fff; border-left: 4px solid var(--primary); padding-left: 10px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
-    .event-title { font-size: 1.15rem; font-weight: 600; color: #fff; }
-    .event-meta { font-size: 0.85rem; color: var(--muted); margin: 4px 0 12px; }
-    .tiers { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
-    .tier-box {
-      flex: 1; min-width: 130px; background: #0f1624; border: 1px solid var(--border);
-      border-radius: 8px; padding: 10px; text-align: center;
+    .devops-title {
+      color: var(--text-secondary);
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
-    .tier-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
-    .tier-price { font-size: 1.05rem; font-weight: 600; margin: 4px 0; }
-    .tier-seats { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
-    button {
-      background: var(--primary); color: #fff; border: none; padding: 8px 14px;
-      border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; width: 100%;
+    .devops-title span.domain-pill {
+      background: rgba(0, 114, 206, 0.2);
+      color: #38bdf8;
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-weight: 600;
     }
-    button:hover { opacity: 0.9; }
-    button.accent { background: var(--accent); }
-    button.success { background: var(--success); }
-    input, select {
-      width: 100%; padding: 8px 10px; margin-bottom: 10px; border-radius: 6px;
-      border: 1px solid var(--border); background: #0f1624; color: #fff;
+    .health-pills { display: flex; gap: 8px; flex-wrap: wrap; }
+    .h-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 10px;
+      border-radius: 999px;
+      background: #151925;
+      border: 1px solid var(--border);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+      color: var(--text-secondary);
     }
-    .hold-box { border-color: var(--warn); background: rgba(245, 158, 11, 0.08); }
-    .qr-code {
-      font-family: monospace; font-size: 0.75rem; background: #090d16;
-      padding: 8px; border-radius: 6px; border: 1px dashed var(--success);
-      color: var(--success); margin-top: 6px; word-break: break-all;
+    .h-dot { width: 7px; height: 7px; border-radius: 50%; background: #64748b; }
+    .h-pill.up { border-color: rgba(16, 185, 129, 0.4); color: #cbd5e1; }
+    .h-pill.up .h-dot { background: var(--success); box-shadow: 0 0 8px var(--success); }
+    .h-pill.down { border-color: rgba(248, 68, 100, 0.5); color: #fca5a5; }
+    .h-pill.down .h-dot { background: var(--bms-red); box-shadow: 0 0 8px var(--bms-red); }
+
+    /* BookMyShow Primary Header */
+    .navbar {
+      background: var(--bms-navy);
+      padding: 14px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
-    .status-msg { font-size: 0.85rem; margin-top: 8px; color: var(--warn); }
+    .nav-left { display: flex; align-items: center; gap: 24px; flex: 1; }
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      color: #fff;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .logo .highlight {
+      background: var(--bms-red);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 6px;
+    }
+    .search-box {
+      flex: 1;
+      max-width: 520px;
+      position: relative;
+    }
+    .search-box input {
+      width: 100%;
+      padding: 10px 16px 10px 40px;
+      border-radius: 6px;
+      border: 1px solid #333c54;
+      background: #131722;
+      color: #fff;
+      font-size: 0.9rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-box input:focus { border-color: var(--bms-red); }
+    .search-icon {
+      position: absolute;
+      left: 13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+    .nav-right { display: flex; align-items: center; gap: 16px; }
+    .city-select {
+      background: transparent;
+      color: #e2e8f0;
+      border: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .city-select option { background: var(--bms-navy); color: #fff; }
+    .btn {
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      border: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+    .btn-primary { background: var(--bms-red); color: #fff; }
+    .btn-primary:hover { background: var(--bms-red-dark); transform: translateY(-1px); }
+    .btn-outline {
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { background: rgba(255,255,255,0.12); }
+
+    /* Sub-nav Category Strip */
+    .subnav {
+      background: #161a26;
+      padding: 10px 32px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      overflow-x: auto;
+    }
+    .cat-links { display: flex; gap: 22px; list-style: none; }
+    .cat-links li {
+      font-size: 0.85rem;
+      color: #cbd5e1;
+      cursor: pointer;
+      white-space: nowrap;
+      padding-bottom: 2px;
+      transition: color 0.2s;
+    }
+    .cat-links li:hover, .cat-links li.active {
+      color: var(--bms-red);
+      font-weight: 600;
+    }
+    .subnav-right { font-size: 0.8rem; color: var(--text-secondary); white-space: nowrap; }
+
+    /* Hero Spotlight Banner */
+    .hero-wrap {
+      max-width: 1280px;
+      margin: 24px auto 0;
+      padding: 0 24px;
+    }
+    .hero-banner {
+      position: relative;
+      border-radius: 16px;
+      overflow: hidden;
+      min-height: 320px;
+      background: linear-gradient(90deg, #0b0e17 0%, rgba(11,14,23,0.8) 55%, rgba(11,14,23,0.2) 100%),
+                  url('https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat;
+      display: flex;
+      align-items: center;
+      padding: 40px 48px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.45);
+    }
+    .hero-content { max-width: 600px; z-index: 2; }
+    .live-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(248, 68, 100, 0.2);
+      border: 1px solid var(--bms-red);
+      color: #fda4af;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+    }
+    .hero-content h1 {
+      font-size: 2.3rem;
+      font-weight: 800;
+      line-height: 1.15;
+      margin-bottom: 12px;
+    }
+    .hero-content p {
+      color: #cbd5e1;
+      font-size: 0.98rem;
+      margin-bottom: 22px;
+      line-height: 1.5;
+    }
+    .hero-stats {
+      display: flex;
+      gap: 24px;
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+    .hero-stats strong { color: #fff; }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1280px;
+      margin: 32px auto 80px;
+      padding: 0 24px;
+    }
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      margin-bottom: 20px;
+    }
+    .section-header h2 {
+      font-size: 1.45rem;
+      font-weight: 700;
+    }
+    .section-header p {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    /* Active Redis Seat Hold Sticky Banner */
+    .hold-drawer {
+      display: none;
+      background: linear-gradient(135deg, #1e2436 0%, #171c2b 100%);
+      border: 2px solid var(--warning);
+      border-radius: 14px;
+      padding: 20px 26px;
+      margin-bottom: 32px;
+      box-shadow: 0 12px 32px rgba(245, 158, 11, 0.15);
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .hold-drawer.active { display: flex; }
+    .hold-info { flex: 1; min-width: 280px; }
+    .hold-tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .timer-box {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--warning);
+      background: #0d1017;
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: 1px solid rgba(245, 158, 11, 0.35);
+      text-align: center;
+    }
+    .timer-label { font-size: 0.68rem; color: var(--text-secondary); text-transform: uppercase; display: block; }
+    .checkout-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .payment-select {
+      padding: 11px 14px;
+      border-radius: 8px;
+      background: #0d1017;
+      color: #fff;
+      border: 1px solid var(--border);
+      font-weight: 500;
+    }
+
+    /* Concert Poster Grid */
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+      gap: 26px;
+    }
+    .poster-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .poster-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.5);
+      border-color: #3f4a6b;
+    }
+    .poster-img {
+      height: 205px;
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 14px;
+    }
+    .poster-img::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(15,18,25,0.2) 0%, rgba(15,18,25,0.92) 100%);
+    }
+    .poster-top, .poster-bottom { position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center; }
+    .badge-promoted {
+      background: var(--bms-red);
+      color: #fff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+    }
+    .badge-id {
+      background: rgba(15, 18, 25, 0.8);
+      backdrop-filter: blur(4px);
+      color: #cbd5e1;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .likes-bar {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #f8fafc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .likes-bar span { color: var(--success); }
+
+    .poster-body { padding: 18px 20px 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+    .concert-title { font-size: 1.18rem; font-weight: 700; margin-bottom: 6px; line-height: 1.3; }
+    .concert-meta { font-size: 0.84rem; color: var(--text-secondary); margin-bottom: 14px; display: flex; flex-direction: column; gap: 4px; }
+    
+    /* Seat Quantity & Tier Selection */
+    .qty-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      font-size: 0.82rem;
+      color: #cbd5e1;
+    }
+    .qty-pills { display: flex; gap: 6px; }
+    .qty-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #121622;
+      color: #cbd5e1;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+    }
+    .qty-btn.selected {
+      background: var(--bms-red);
+      color: #fff;
+      border-color: var(--bms-red);
+    }
+
+    .tier-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+      gap: 10px;
+    }
+    .tier-card {
+      background: #121622;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px;
+      text-align: center;
+      transition: border-color 0.2s;
+    }
+    .tier-card:hover { border-color: var(--bms-red); }
+    .tier-code { font-size: 0.78rem; font-weight: 700; color: #38bdf8; text-transform: uppercase; letter-spacing: 0.5px; }
+    .tier-price { font-size: 1.05rem; font-weight: 800; color: #fff; margin: 3px 0; }
+    .tier-avail { font-size: 0.7rem; color: var(--text-secondary); margin-bottom: 8px; }
+    .tier-card button {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 0.76rem;
+      border-radius: 5px;
+      background: var(--bms-red);
+      color: #fff;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .tier-card button:hover { background: var(--bms-red-dark); }
+
+    /* Perforated M-Tickets Section */
+    .tickets-section { margin-top: 52px; }
+    .tickets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
+    }
+    .mticket {
+      background: linear-gradient(135deg, #1b2234 0%, #141927 100%);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.35);
+    }
+    .mticket-left {
+      flex: 1;
+      padding: 18px 20px;
+      border-right: 2px dashed #334155;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .mticket-right {
+      width: 140px;
+      padding: 16px;
+      background: #0d111a;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .qr-img {
+      width: 92px;
+      height: 92px;
+      background: #fff;
+      padding: 6px;
+      border-radius: 8px;
+      margin-bottom: 6px;
+    }
+    .seat-pill {
+      display: inline-block;
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 4px;
+      margin: 3px 4px 3px 0;
+    }
+    .sig-code {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      margin-top: 8px;
+      word-break: break-all;
+    }
+
+    /* Auth Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 16px;
+    }
+    .modal-backdrop.open { display: flex; }
+    .auth-modal {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      width: 100%;
+      max-width: 420px;
+      padding: 28px;
+      position: relative;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.6);
+    }
+    .close-modal {
+      position: absolute;
+      top: 16px;
+      right: 18px;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 1.3rem;
+      cursor: pointer;
+    }
+    .auth-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      background: #111520;
+      padding: 4px;
+      border-radius: 8px;
+    }
+    .auth-tab {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+    .auth-tab.active { background: var(--bms-red); color: #fff; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 5px; }
+    .form-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: #0f131d;
+      color: #fff;
+      font-size: 0.9rem;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1e293b;
+      color: #fff;
+      border-left: 4px solid var(--bms-red);
+      padding: 14px 20px;
+      border-radius: 8px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+      font-size: 0.88rem;
+      z-index: 1000;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .navbar, .devops-ribbon, .subnav { padding-left: 16px; padding-right: 16px; }
+      .hero-banner { padding: 24px; min-height: 240px; }
+      .hero-content h1 { font-size: 1.65rem; }
+      .events-grid, .tickets-grid { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
 
-<header>
-  <div class="brand">EventSphere <span>ravi-devops.space</span></div>
-  <div class="health-bar">
-    <span id="h-event" class="badge">event: checking...</span>
-    <span id="h-user" class="badge">user: checking...</span>
-    <span id="h-reservation" class="badge">reservation: checking...</span>
-    <span id="h-booking" class="badge">booking: checking...</span>
-    <span id="h-worker" class="badge">worker: checking...</span>
-  </div>
-</header>
-
-<div class="container">
-  <!-- Left Column: Live Concerts & My Bookings -->
-  <div>
-    <h2>1. Live Concerts (MongoDB via event-service)</h2>
-    <div id="events-list">Loading concerts...</div>
-
-    <h2 style="margin-top: 28px;">4. My Confirmed Bookings & Async QR Tickets (PostgreSQL + Worker)</h2>
-    <div style="margin-bottom: 12px; display: flex; gap: 8px;">
-      <button onclick="loadBookings()" style="width: auto;">Refresh My Tickets</button>
+  <!-- Top DevOps Live Cluster Health Ribbon -->
+  <div class="devops-ribbon">
+    <div class="devops-title">
+      <span>CLUSTER TELEMETRY</span>
+      <span class="domain-pill">ravi-devops.space</span>
     </div>
-    <div id="bookings-list">No bookings loaded yet.</div>
+    <div class="health-pills">
+      <div id="h-event" class="h-pill"><span class="h-dot"></span>event-service</div>
+      <div id="h-user" class="h-pill"><span class="h-dot"></span>user-service</div>
+      <div id="h-reservation" class="h-pill"><span class="h-dot"></span>reservation-redis</div>
+      <div id="h-booking" class="h-pill"><span class="h-dot"></span>booking-pg</div>
+      <div id="h-worker" class="h-pill"><span class="h-dot"></span>ticket-worker-mq</div>
+    </div>
   </div>
 
-  <!-- Right Column: User Auth & Active Redis Seat Hold -->
-  <div>
-    <h2>2. Fan Account (MongoDB + Redis via user-service)</h2>
-    <div class="card">
-      <div id="user-status" style="margin-bottom: 10px; font-size: 0.85rem; color: var(--success);">
-        Current User: <strong>GUEST</strong>
+  <!-- BookMyShow Style Main Navbar -->
+  <nav class="navbar">
+    <div class="nav-left">
+      <a href="#" class="logo">Event<span class="highlight">Sphere</span></a>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="search-input" placeholder="Search for Live Concerts, Artists, Stadiums or Cities..." oninput="filterConcerts()" />
       </div>
-      <input type="text" id="username" placeholder="Username (for register)" />
-      <input type="email" id="email" placeholder="Email address" />
-      <input type="password" id="password" placeholder="Password" />
-      <div style="display: flex; gap: 8px;">
-        <button onclick="registerUser()">Register</button>
-        <button onclick="loginUser()" class="success">Login</button>
-      </div>
-      <div id="auth-msg" class="status-msg"></div>
     </div>
+    <div class="nav-right">
+      <select class="city-select" id="city-filter" onchange="filterConcerts()">
+        <option value="ALL">All Cities (India)</option>
+        <option value="Hyderabad">Hyderabad</option>
+        <option value="Mumbai">Mumbai</option>
+        <option value="Bengaluru">Bengaluru</option>
+        <option value="Chennai">Chennai</option>
+        <option value="Delhi">Delhi NCR</option>
+      </select>
+      <button class="btn btn-outline" onclick="scrollToTickets()">🎟️ My M-Tickets</button>
+      <button class="btn btn-primary" id="auth-btn" onclick="openAuthModal()">Sign In</button>
+    </div>
+  </nav>
 
-    <h2>3. Active 10-Min Seat Lock (Redis via reservation-service)</h2>
-    <div class="card hold-box" id="hold-panel">
-      <p style="font-size: 0.85rem; color: var(--muted);">Select a concert seating tier on the left to lock seats in Redis for 10 minutes.</p>
+  <!-- Sub-Navigation Category Bar -->
+  <div class="subnav">
+    <ul class="cat-links">
+      <li class="active" onclick="setCategory('ALL', this)">All Shows</li>
+      <li onclick="setCategory('Symphony', this)">Live Symphony</li>
+      <li onclick="setCategory('Rock', this)">Rock & Pop Tours</li>
+      <li onclick="setCategory('EDM', this)">EDM & Arena</li>
+      <li onclick="setCategory('Classical', this)">Classical Fusion</li>
+    </ul>
+    <div class="subnav-right" id="user-badge">rowsing as: <strong>GUEST</strong></div>
+  </div>
+
+  <!-- Spotlight Hero Carousel Banner -->
+  <div class="hero-wrap">
+    <div class="hero-banner">
+      <div class="hero-content">
+        <div class="live-pill">⚡ Flash-Sale Queue Active • Redis 10-Min Seat Locks</div>
+        <h1>Experience Arena Concerts Live Under The Stars</h1>
+        <p>Instant seat locking powered by Redis, zero-downtime ACID checkout on PostgreSQL, and instant cryptographic QR M-Tickets via RabbitMQ.</p>
+        <div class="hero-stats">
+          <div>🔥 <strong>100% Live</strong> MongoDB Inventory</div>
+          <div>⏱️ <strong>600s TTL</strong> Atomic Hold</div>
+          <div>🎫 <strong>SHA-256</strong> Verified QR Passes</div>
+        </div>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-  let currentUser = { userId: 'GUEST', username: 'GUEST' };
-  let authToken = null;
-  let activeHold = null;
+  <!-- Main Content Area -->
+  <main class="main-container">
 
-  async function checkHealth() {
-    const services = ['event', 'user', 'reservation', 'booking', 'worker'];
-    for (const s of services) {
-      const el = document.getElementById(`h-${s}`);
-      try {
-        const res = await fetch(`/health/${s}`);
-        if (res.ok) {
-          el.textContent = `${s}: ONLINE`;
-          el.className = 'badge up';
-        } else {
-          el.textContent = `${s}: DEGRADED`;
-          el.className = 'badge down';
+    <!-- Sticky Redis 10-Minute Seat Hold & Checkout Drawer -->
+    <div id="hold-drawer" class="hold-drawer">
+      <div class="hold-info">
+        <div class="hold-tag">🔒 SEATS LOCKED IN REDIS (<span id="hold-id-text">HOLD-XXXX</span>)</div>
+        <h3 id="hold-event-title" style="font-size: 1.2rem; margin-bottom: 4px;">Concert Name</h3>
+        <p id="hold-summary" style="font-size: 0.88rem; color: #cbd5e1;">Tier: VIP • 2 Seats • Total: ₹9,998</p>
+      </div>
+      <div class="timer-box">
+        <span class="timer-label">Hold Expires In</span>
+        <span id="countdown-clock">10:00</span>
+      </div>
+      <div class="checkout-controls">
+        <select id="payment-method" class="payment-select">
+          <option value="UPI">📱 UPI (GPay / PhonePe)</option>
+          <option value="CARD">💳 Credit / Debit Card</option>
+          <option value="NETBANKING">🏦 NetBanking</option>
+        </select>
+        <button class="btn btn-primary" style="padding: 12px 24px; font-size: 0.95rem;" onclick="completeCheckout()">
+          Pay Now & Issue QR Tickets →
+        </button>
+      </div>
+    </div>
+
+    <!-- Recommended Concerts Header -->
+    <div class="section-header">
+      <div>
+        <h2>Recommended Concerts & Arena Tours</h2>
+        <p>Real-time inventory fetched from <code>mongodb.ravi-devops.space:27017</code> via <code>event-service</code></p>
+      </div>
+      <button class="btn btn-outline" onclick="loadEvents()">↻ Refresh Catalog</button>
+    </div>
+
+    <!-- Poster Grid -->
+    <div id="events-grid" class="events-grid">
+      <div style="padding: 40px; color: var(--text-secondary);">Loading live concerts...</div>
+    </div>
+
+    <!-- My Confirmed Bookings & Perforated M-Tickets -->
+    <section id="tickets-section" class="tickets-section">
+      <div class="section-header">
+        <div>
+          <h2>🎟️ My Confirmed M-Tickets & QR Passes</h2>
+          <p>Transactional orders from <code>postgresql.ravi-devops.space</code> & async QR signatures generated by <code>ticket-worker</code></p>
+        </div>
+        <button class="btn btn-outline" onclick="loadBookings()">↻ Refresh Tickets</button>
+      </div>
+      <div id="tickets-grid" class="tickets-grid"></div>
+    </section>
+
+  </main>
+
+  <!-- Sign In / Register Modal -->
+  <div id="auth-modal" class="modal-backdrop">
+    <div class="auth-modal">
+      <button class="close-modal" onclick="closeAuthModal()">✕</button>
+      <h3 style="margin-bottom: 16px; font-size: 1.25rem;">Fan Account</h3>
+      <div class="auth-tabs">
+        <div id="tab-login" class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
+        <div id="tab-register" class="auth-tab" onclick="switchAuthTab('register')">Create Account</div>
+      </div>
+      <div id="field-username" class="form-group" style="display: none;">
+        <label>Full Name / Username</label>
+        <input type="text" id="auth-username" placeholder="e.g. Ravi Kiran" />
+      </div>
+      <div class="form-group">
+        <label>Email Address</label>
+        <input type="email" id="auth-email" placeholder="fan@ravi-devops.space" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="auth-password" placeholder="••••••••" />
+      </div>
+      <button class="btn btn-primary" style="width: 100%; padding: 11px; margin-top: 6px;" id="auth-submit-btn" onclick="submitAuth()">
+        Sign In with Redis Session
+      </button>
+      <p id="auth-feedback" style="font-size: 0.82rem; margin-top: 12px; text-align: center;"></p>
+    </div>
+  </div>
+
+  <!-- Toast Banner -->
+  <div id="toast" class="toast"></div>
+
+  <script>
+    let allEvents = [];
+    let selectedQuantities = {};
+    let currentUser = { userId: 'GUEST', username: 'GUEST' };
+    let authToken = null;
+    let authMode = 'login';
+    let activeHold = null;
+    let countdownInterval = null;
+
+    // High-res concert backdrops mapped cleanly to events
+    const posterImages = [
+      'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?auto=format&fit=crop&w=900&q=80',
+      'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=900&q=80'
+    ];
+
+    function showToast(msg, isError = false) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.style.borderLeftColor = isError ? '#f84464' : '#10b981';
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 4000);
+    }
+
+    // 1. Live Cluster Health Polling
+    async function checkHealth() {
+      const services = ['event', 'user', 'reservation', 'booking', 'worker'];
+      for (const s of services) {
+        const pill = document.getElementById(`h-${s}`);
+        try {
+          const res = await fetch(`/health/${s}`);
+          if (res.ok) {
+            pill.className = 'h-pill up';
+          } else {
+            pill.className = 'h-pill down';
+          }
+        } catch {
+          pill.className = 'h-pill down';
         }
-      } catch {
-        el.textContent = `${s}: OFFLINE`;
-        el.className = 'badge down';
       }
     }
-  }
 
-  async function loadEvents() {
-    const container = document.getElementById('events-list');
-    try {
-      const res = await fetch('/api/events');
-      const events = await res.json();
+    // 2. Load Concerts from event-service
+    async function loadEvents() {
+      const grid = document.getElementById('events-grid');
+      try {
+        const res = await fetch('/api/events');
+        allEvents = await res.json();
+        renderEvents(allEvents);
+      } catch (err) {
+        grid.innerHTML = `<div style="color:#f84464; padding:20px;">Error loading concerts from event-service: ${err.message}</div>`;
+      }
+    }
+
+    function renderEvents(events) {
+      const grid = document.getElementById('events-grid');
       if (!events.length) {
-        container.innerHTML = '<div class="card">No active concerts found in MongoDB.</div>';
+        grid.innerHTML = `<div style="padding:30px; color:var(--text-secondary);">No matching concerts found.</div>`;
         return;
       }
-      container.innerHTML = events.map(ev => `
-        <div class="card">
-          <div class="event-title">${ev.title} <span style="font-size:0.8rem; color:var(--muted);">(${ev.eventId})</span></div>
-          <div class="event-meta">${ev.artist || ''} • ${ev.venue} • ${ev.date || 'Upcoming'}</div>
-          <div class="tiers">
-            ${(ev.tiers || []).map(t => `
-              <div class="tier-box">
-                <div class="tier-name">${t.tierCode}</div>
-                <div class="tier-price">₹${t.price}</div>
-                <div class="tier-seats">${t.availableSeats} seats left</div>
-                <button onclick="holdSeats('${ev.eventId}', '${t.tierCode}', ${t.price})">Hold 2 Seats</button>
+
+      grid.innerHTML = events.map((ev, idx) => {
+        const bgImg = ev.bannerUrl || posterImages[idx % posterImages.length];
+        const qty = selectedQuantities[ev.eventId] || 2;
+        const likes = (91 + (idx * 3) % 8) + '%';
+
+        return `
+          <div class="poster-card">
+            <div class="poster-img" style="background-image: url('${bgImg}');">
+              <div class="poster-top">
+                <span class="badge-promoted">🔥 FAST FILLING</span>
+                <span class="badge-id">${ev.eventId}</span>
               </div>
-            `).join('')}
+              <div class="poster-bottom">
+                <div class="likes-bar"><span>♥</span> ${likes} Fans Interested</div>
+              </div>
+            </div>
+            <div class="poster-body">
+              <div>
+                <div class="concert-title">${ev.title}</div>
+                <div class="concert-meta">
+                  <span>🎤 <strong>${ev.artist || 'Live Arena Tour'}</strong></span>
+                  <span>📍 ${ev.venue}</span>
+                  <span>📅 ${ev.date ? new Date(ev.date).toDateString() : 'Upcoming Prime Show'}</span>
+                </div>
+                <div class="qty-row">
+                  <span>Select Seats:</span>
+                  <div class="qty-pills">
+                    ${[1, 2, 4, 6].map(n => `
+                      <button class="qty-btn ${qty === n ? 'selected' : ''}" onclick="setQty('${ev.eventId}', ${n})">${n}</button>
+                    `).join('')}
+                  </div>
+                </div>
+              </div>
+              <div class="tier-grid">
+                ${(ev.tiers || []).map(t => `
+                  <div class="tier-card">
+                    <div class="tier-code">${t.tierCode}</div>
+                    <div class="tier-price">₹${t.price.toLocaleString('en-IN')}</div>
+                    <div class="tier-avail">${t.availableSeats} left</div>
+                    <button onclick="holdSeats('${ev.eventId}', '${ev.title.replace(/'/g, "")}', '${t.tierCode}', ${t.price})">
+                      Book ${qty} ${qty === 1 ? 'Seat' : 'Seats'}
+                    </button>
+                  </div>
+                `).join('')}
+              </div>
+            </div>
           </div>
-        </div>
-      `).join('');
-    } catch (err) {
-      container.innerHTML = `<div class="card">Error loading concerts: ${err.message}</div>`;
+        `;
+      }).join('');
     }
-  }
 
-  async function registerUser() {
-    const username = document.getElementById('username').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const msg = document.getElementById('auth-msg');
-    try {
-      const res = await fetch('/api/users/register', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, email, password })
+    function setQty(eventId, count) {
+      selectedQuantities[eventId] = count;
+      filterConcerts();
+    }
+
+    function filterConcerts() {
+      const q = document.getElementById('search-input').value.toLowerCase();
+      const city = document.getElementById('city-filter').value.toLowerCase();
+      const filtered = allEvents.filter(ev => {
+        const text = `${ev.title} ${ev.artist || ''} ${ev.venue || ''} ${ev.category || ''}`.toLowerCase();
+        const matchesQuery = !q || text.includes(q);
+        const matchesCity = city === 'all' || text.includes(city);
+        return matchesQuery && matchesCity;
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Registration failed');
-      msg.style.color = '#10b981';
-      msg.textContent = `Registered ${data.userId}! Now click Login.`;
-    } catch (err) {
-      msg.style.color = '#e21937';
-      msg.textContent = err.message;
+      renderEvents(filtered);
     }
-  }
 
-  async function loginUser() {
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const msg = document.getElementById('auth-msg');
-    try {
-      const res = await fetch('/api/users/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Login failed');
-      authToken = data.token;
-      currentUser = data.user;
-      document.getElementById('user-status').innerHTML = `Logged in as: <strong>${currentUser.username} (${currentUser.userId})</strong>`;
-      msg.style.color = '#10b981';
-      msg.textContent = 'Session cached in Redis!';
-      loadBookings();
-    } catch (err) {
-      msg.style.color = '#e21937';
-      msg.textContent = err.message;
-    }
-  }
-
-  async function holdSeats(eventId, tierCode, unitPrice) {
-    const panel = document.getElementById('hold-panel');
-    panel.innerHTML = 'Locking seats in Redis...';
-    try {
-      const headers = { 'Content-Type': 'application/json' };
-      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
-      const res = await fetch('/api/reserve/hold', {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          eventId,
-          tierCode,
-          seatCount: 2,
-          unitPrice,
-          userId: currentUser.userId
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Failed to hold seats');
-      activeHold = data.hold;
-      panel.innerHTML = `
-        <div style="font-weight:700; color:var(--warn); margin-bottom:6px;">Hold ID: ${activeHold.holdId}</div>
-        <div style="font-size:0.85rem; margin-bottom:10px;">
-          Event: <strong>${activeHold.eventId}</strong> | Tier: <strong>${activeHold.tierCode}</strong><br/>
-          Seats: <strong>${activeHold.seatCount}</strong> | Total: <strong>₹${activeHold.totalAmount}</strong><br/>
-          Redis TTL: <strong>${data.expiresInSeconds} seconds</strong>
-        </div>
-        <button class="accent" onclick="checkoutHold('${activeHold.holdId}')">Pay Now & Issue QR Tickets</button>
-      `;
-    } catch (err) {
-      panel.innerHTML = `<div style="color:var(--accent);">Error: ${err.message}</div>`;
-    }
-  }
-
-  async function checkoutHold(holdId) {
-    const panel = document.getElementById('hold-panel');
-    try {
-      const res = await fetch('/api/bookings/checkout', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          holdId,
-          userId: currentUser.userId,
-          paymentMethod: 'UPI'
-        })
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Checkout failed');
-      panel.innerHTML = `
-        <div style="color:var(--success); font-weight:700;">Booking Confirmed: ${data.booking.booking_id}</div>
-        <div style="font-size:0.85rem; margin-top:6px;">
-          Order saved to PostgreSQL & published to RabbitMQ! Waiting 2 seconds for <strong>ticket-worker</strong> to generate QR codes...
-        </div>
-      `;
-      await loadEvents();
-      setTimeout(loadBookings, 1500);
-    } catch (err) {
-      panel.innerHTML = `<div style="color:var(--accent);">Checkout Error: ${err.message}</div>`;
-    }
-  }
-
-  async function loadBookings() {
-    const container = document.getElementById('bookings-list');
-    try {
-      const res = await fetch(`/api/bookings/user/${currentUser.userId}`);
-      const bookings = await res.json();
-      if (!bookings.length) {
-        container.innerHTML = `<div class="card">No bookings found for user <strong>${currentUser.userId}</strong>.</div>`;
-        return;
+    function setCategory(cat, el) {
+      document.querySelectorAll('.cat-links li').forEach(li => li.classList.remove('active'));
+      el.classList.add('active');
+      if (cat === 'ALL') {
+        renderEvents(allEvents);
+      } else {
+        const q = cat.toLowerCase();
+        renderEvents(allEvents.filter(ev => `${ev.title} ${ev.category || ''} ${ev.artist || ''}`.toLowerCase().includes(q)));
       }
-      container.innerHTML = bookings.map(b => `
-        <div class="card">
-          <div style="display:flex; justify-content:space-between; align-items:center;">
-            <strong>${b.booking_id} (${b.event_id} - ${b.tier_code})</strong>
-            <span class="badge ${b.ticket_status === 'ISSUED' ? 'up' : ''}">${b.ticket_status}</span>
-          </div>
-          <div style="font-size:0.85rem; color:var(--muted); margin-top:4px;">
-            Seats: ${b.seat_count} • Paid: ₹${b.total_amount}
-          </div>
-          ${(b.tickets || []).map(t => `
-            <div class="qr-code">🎫 ${t.seat_number} → ${t.qr_code_payload}</div>
-          `).join('')}
-        </div>
-      `).join('');
-    } catch (err) {
-      container.innerHTML = `<div class="card">Error loading bookings: ${err.message}</div>`;
     }
-  }
 
-  checkHealth();
-  loadEvents();
-  loadBookings();
-  setInterval(checkHealth, 15000);
-</script>
+    // 3. Hold Seats in Redis (reservation-service)
+    async function holdSeats(eventId, title, tierCode, unitPrice) {
+      const seatCount = selectedQuantities[eventId] || 2;
+      try {
+        const headers = { 'Content-Type': 'application/json' };
+        if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+
+        const res = await fetch('/api/reserve/hold', {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            eventId,
+            tierCode,
+            seatCount,
+            unitPrice,
+            userId: currentUser.userId
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Could not lock seats');
+
+        activeHold = data.hold;
+        document.getElementById('hold-id-text').textContent = activeHold.holdId;
+        document.getElementById('hold-event-title').textContent = `${title} (${activeHold.eventId})`;
+        document.getElementById('hold-summary').textContent =
+          `Tier: ${activeHold.tierCode} • ${activeHold.seatCount} Seats × ₹${activeHold.unitPrice.toLocaleString('en-IN')} = ₹${activeHold.totalAmount.toLocaleString('en-IN')}`;
+
+        const drawer = document.getElementById('hold-drawer');
+        drawer.classList.add('active');
+        drawer.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+        startCountdown(data.expiresInSeconds || 600);
+        showToast(`Locked ${seatCount} ${tierCode} seats in Redis for 10 minutes!`);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    function startCountdown(seconds) {
+      if (countdownInterval) clearInterval(countdownInterval);
+      let rem = seconds;
+      const clock = document.getElementById('countdown-clock');
+      const update = () => {
+        const m = String(Math.floor(rem / 60)).padStart(2, '0');
+        const s = String(rem % 60).padStart(2, '0');
+        clock.textContent = `${m}:${s}`;
+        if (rem <= 0) {
+          clearInterval(countdownInterval);
+          document.getElementById('hold-drawer').classList.remove('active');
+          showToast('Seat hold expired in Redis!', true);
+        }
+        rem--;
+      };
+      update();
+      countdownInterval = setInterval(update, 1000);
+    }
+
+    // 4. Complete Checkout (booking-service -> PostgreSQL + RabbitMQ -> ticket-worker)
+    async function completeCheckout() {
+      if (!activeHold) return;
+      const paymentMethod = document.getElementById('payment-method').value;
+      try {
+        const res = await fetch('/api/bookings/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            holdId: activeHold.holdId,
+            userId: currentUser.userId,
+            paymentMethod
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'Checkout failed');
+
+        if (countdownInterval) clearInterval(countdownInterval);
+        document.getElementById('hold-drawer').classList.remove('active');
+        showToast(`Booking ${data.booking.booking_id} confirmed! Generating QR M-Tickets via RabbitMQ...`);
+
+        await loadEvents();
+        setTimeout(() => {
+          loadBookings();
+          scrollToTickets();
+        }, 1200);
+      } catch (err) {
+        showToast(err.message, true);
+      }
+    }
+
+    // 5. Render Perforated M-Tickets with Scannable QR Code
+    async function loadBookings() {
+      const grid = document.getElementById('tickets-grid');
+      try {
+        const res = await fetch(`/api/bookings/user/${currentUser.userId}`);
+        const bookings = await res.json();
+        if (!bookings.length) {
+          grid.innerHTML = `<div style="padding:24px; background:var(--card-bg); border-radius:10px; border:1px solid var(--border); color:var(--text-secondary);">No M-Tickets issued yet for <strong>${currentUser.username} (${currentUser.userId})</strong>. Book a concert above!</div>`;
+          return;
+        }
+
+        grid.innerHTML = bookings.map(b => {
+          const qrData = encodeURIComponent(
+            (b.tickets && b.tickets[0] && b.tickets[0].qr_code_payload) || `EVENTSPHERE|${b.booking_id}|${b.event_id}`
+          );
+          const isIssued = b.ticket_status === 'ISSUED';
+
+          return `
+            <div class="mticket">
+              <div class="mticket-left">
+                <div>
+                  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                    <span style="font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:#38bdf8; font-weight:700;">${b.booking_id}</span>
+                    <span class="h-pill ${isIssued ? 'up' : 'down'}">
+                      <span class="h-dot"></span>${b.ticket_status}
+                    </span>
+                  </div>
+                  <div style="font-size:1.1rem; font-weight:700; margin-bottom:4px;">Event: ${b.event_id} • ${b.tier_code} Tier</div>
+                  <div style="font-size:0.83rem; color:var(--text-secondary); margin-bottom:10px;">
+                    Quantity: <strong>${b.seat_count} Seats</strong> • Total Paid: <strong>₹${Number(b.total_amount).toLocaleString('en-IN')}</strong>
+                  </div>
+                  <div>
+                    ${(b.tickets || []).map(t => `<span class="seat-pill">💺 ${t.seat_number}</span>`).join('')}
+                  </div>
+                </div>
+                <div class="sig-code">
+                  ${(b.tickets && b.tickets[0]) ? b.tickets[0].qr_code_payload : 'Waiting for ticket-worker...'}
+                </div>
+              </div>
+              <div class="mticket-right">
+                <img class="qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${qrData}" alt="QR Ticket" />
+                <span style="font-size:0.68rem; color:var(--success); font-weight:700; letter-spacing:0.5px;">M-TICKET QR</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        grid.innerHTML = `<div style="color:#f84464;">Failed to load bookings: ${err.message}</div>`;
+      }
+    }
+
+    // 6. User Auth Modal Functions
+    function openAuthModal() { document.getElementById('auth-modal').classList.add('open'); }
+    function closeAuthModal() { document.getElementById('auth-modal').classList.remove('open'); }
+
+    function switchAuthTab(mode) {
+      authMode = mode;
+      document.getElementById('tab-login').classList.toggle('active', mode === 'login');
+      document.getElementById('tab-register').classList.toggle('active', mode === 'register');
+      document.getElementById('field-username').style.display = mode === 'register' ? 'block' : 'none';
+      document.getElementById('auth-submit-btn').textContent = mode === 'login' ? 'Sign In with Redis Session' : 'Create Fan Account';
+      document.getElementById('auth-feedback').textContent = '';
+    }
+
+    async function submitAuth() {
+      const username = document.getElementById('auth-username').value.trim();
+      const email = document.getElementById('auth-email').value.trim();
+      const password = document.getElementById('auth-password').value.trim();
+      const fb = document.getElementById('auth-feedback');
+
+      try {
+        if (authMode === 'register') {
+          const res = await fetch('/api/users/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Registration failed');
+          showToast(`Account ${data.userId} created! Signing you in...`);
+          switchAuthTab('login');
+        } else {
+          const res = await fetch('/api/users/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.error || 'Invalid credentials');
+          authToken = data.token;
+          currentUser = data.user;
+          document.getElementById('user-badge').innerHTML = `Signed in: <strong style="color:#10b981;">${currentUser.username} (${currentUser.userId})</strong>`;
+          document.getElementById('auth-btn').textContent = currentUser.username;
+          closeAuthModal();
+          showToast(`Welcome ${currentUser.username}! Session cached in Redis.`);
+          loadBookings();
+        }
+      } catch (err) {
+        fb.style.color = '#f84464';
+        fb.textContent = err.message;
+      }
+    }
+
+    function scrollToTickets() {
+      document.getElementById('tickets-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    checkHealth();
+    loadEvents();
+    loadBookings();
+    setInterval(checkHealth, 12000);
+  </script>
 </body>
 </html>
