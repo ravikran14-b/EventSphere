@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EventSphere | Flash-Sale Concert Ticketing</title>
+  <style>
+    :root {
+      --bg: #0b0f19;
+      --card: #151c2c;
+      --border: #263147;
+      --primary: #0072ce;
+      --accent: #e21937;
+      --success: #10b981;
+      --warn: #f59e0b;
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: var(--bg); color: var(--text); line-height: 1.5; padding-bottom: 60px; }
+    header {
+      background: #0f1624; border-bottom: 1px solid var(--border);
+      padding: 16px 32px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .brand { font-size: 1.4rem; font-weight: 700; color: #fff; display: flex; align-items: center; gap: 10px; }
+    .brand span { background: var(--primary); padding: 2px 8px; border-radius: 6px; font-size: 0.8rem; }
+    .health-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+    .badge {
+      font-size: 0.75rem; padding: 4px 10px; border-radius: 999px;
+      background: #1e293b; border: 1px solid var(--border); color: var(--muted);
+    }
+    .badge.up { border-color: var(--success); color: var(--success); }
+    .badge.down { border-color: var(--accent); color: var(--accent); }
+    .container { max-width: 1200px; margin: 28px auto; padding: 0 20px; display: grid; grid-template-columns: 2fr 1fr; gap: 24px; }
+    @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
+    h2 { font-size: 1.2rem; margin-bottom: 14px; color: #fff; border-left: 4px solid var(--primary); padding-left: 10px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 18px; margin-bottom: 16px; }
+    .event-title { font-size: 1.15rem; font-weight: 600; color: #fff; }
+    .event-meta { font-size: 0.85rem; color: var(--muted); margin: 4px 0 12px; }
+    .tiers { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .tier-box {
+      flex: 1; min-width: 130px; background: #0f1624; border: 1px solid var(--border);
+      border-radius: 8px; padding: 10px; text-align: center;
+    }
+    .tier-name { font-weight: 700; font-size: 0.9rem; color: var(--primary); }
+    .tier-price { font-size: 1.05rem; font-weight: 600; margin: 4px 0; }
+    .tier-seats { font-size: 0.75rem; color: var(--muted); margin-bottom: 8px; }
+    button {
+      background: var(--primary); color: #fff; border: none; padding: 8px 14px;
+      border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; width: 100%;
+    }
+    button:hover { opacity: 0.9; }
+    button.accent { background: var(--accent); }
+    button.success { background: var(--success); }
+    input, select {
+      width: 100%; padding: 8px 10px; margin-bottom: 10px; border-radius: 6px;
+      border: 1px solid var(--border); background: #0f1624; color: #fff;
+    }
+    .hold-box { border-color: var(--warn); background: rgba(245, 158, 11, 0.08); }
+    .qr-code {
+      font-family: monospace; font-size: 0.75rem; background: #090d16;
+      padding: 8px; border-radius: 6px; border: 1px dashed var(--success);
+      color: var(--success); margin-top: 6px; word-break: break-all;
+    }
+    .status-msg { font-size: 0.85rem; margin-top: 8px; color: var(--warn); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">EventSphere <span>ravi-devops.space</span></div>
+  <div class="health-bar">
+    <span id="h-event" class="badge">event: checking...</span>
+    <span id="h-user" class="badge">user: checking...</span>
+    <span id="h-reservation" class="badge">reservation: checking...</span>
+    <span id="h-booking" class="badge">booking: checking...</span>
+    <span id="h-worker" class="badge">worker: checking...</span>
+  </div>
+</header>
+
+<div class="container">
+  <!-- Left Column: Live Concerts & My Bookings -->
+  <div>
+    <h2>1. Live Concerts (MongoDB via event-service)</h2>
+    <div id="events-list">Loading concerts...</div>
+
+    <h2 style="margin-top: 28px;">4. My Confirmed Bookings & Async QR Tickets (PostgreSQL + Worker)</h2>
+    <div style="margin-bottom: 12px; display: flex; gap: 8px;">
+      <button onclick="loadBookings()" style="width: auto;">Refresh My Tickets</button>
+    </div>
+    <div id="bookings-list">No bookings loaded yet.</div>
+  </div>
+
+  <!-- Right Column: User Auth & Active Redis Seat Hold -->
+  <div>
+    <h2>2. Fan Account (MongoDB + Redis via user-service)</h2>
+    <div class="card">
+      <div id="user-status" style="margin-bottom: 10px; font-size: 0.85rem; color: var(--success);">
+        Current User: <strong>GUEST</strong>
+      </div>
+      <input type="text" id="username" placeholder="Username (for register)" />
+      <input type="email" id="email" placeholder="Email address" />
+      <input type="password" id="password" placeholder="Password" />
+      <div style="display: flex; gap: 8px;">
+        <button onclick="registerUser()">Register</button>
+        <button onclick="loginUser()" class="success">Login</button>
+      </div>
+      <div id="auth-msg" class="status-msg"></div>
+    </div>
+
+    <h2>3. Active 10-Min Seat Lock (Redis via reservation-service)</h2>
+    <div class="card hold-box" id="hold-panel">
+      <p style="font-size: 0.85rem; color: var(--muted);">Select a concert seating tier on the left to lock seats in Redis for 10 minutes.</p>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentUser = { userId: 'GUEST', username: 'GUEST' };
+  let authToken = null;
+  let activeHold = null;
+
+  async function checkHealth() {
+    const services = ['event', 'user', 'reservation', 'booking', 'worker'];
+    for (const s of services) {
+      const el = document.getElementById(`h-${s}`);
+      try {
+        const res = await fetch(`/health/${s}`);
+        if (res.ok) {
+          el.textContent = `${s}: ONLINE`;
+          el.className = 'badge up';
+        } else {
+          el.textContent = `${s}: DEGRADED`;
+          el.className = 'badge down';
+        }
+      } catch {
+        el.textContent = `${s}: OFFLINE`;
+        el.className = 'badge down';
+      }
+    }
+  }
+
+  async function loadEvents() {
+    const container = document.getElementById('events-list');
+    try {
+      const res = await fetch('/api/events');
+      const events = await res.json();
+      if (!events.length) {
+        container.innerHTML = '<div class="card">No active concerts found in MongoDB.</div>';
+        return;
+      }
+      container.innerHTML = events.map(ev => `
+        <div class="card">
+          <div class="event-title">${ev.title} <span style="font-size:0.8rem; color:var(--muted);">(${ev.eventId})</span></div>
+          <div class="event-meta">${ev.artist || ''} • ${ev.venue} • ${ev.date || 'Upcoming'}</div>
+          <div class="tiers">
+            ${(ev.tiers || []).map(t => `
+              <div class="tier-box">
+                <div class="tier-name">${t.tierCode}</div>
+                <div class="tier-price">₹${t.price}</div>
+                <div class="tier-seats">${t.availableSeats} seats left</div>
+                <button onclick="holdSeats('${ev.eventId}', '${t.tierCode}', ${t.price})">Hold 2 Seats</button>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      container.innerHTML = `<div class="card">Error loading concerts: ${err.message}</div>`;
+    }
+  }
+
+  async function registerUser() {
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const msg = document.getElementById('auth-msg');
+    try {
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      msg.style.color = '#10b981';
+      msg.textContent = `Registered ${data.userId}! Now click Login.`;
+    } catch (err) {
+      msg.style.color = '#e21937';
+      msg.textContent = err.message;
+    }
+  }
+
+  async function loginUser() {
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const msg = document.getElementById('auth-msg');
+    try {
+      const res = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Login failed');
+      authToken = data.token;
+      currentUser = data.user;
+      document.getElementById('user-status').innerHTML = `Logged in as: <strong>${currentUser.username} (${currentUser.userId})</strong>`;
+      msg.style.color = '#10b981';
+      msg.textContent = 'Session cached in Redis!';
+      loadBookings();
+    } catch (err) {
+      msg.style.color = '#e21937';
+      msg.textContent = err.message;
+    }
+  }
+
+  async function holdSeats(eventId, tierCode, unitPrice) {
+    const panel = document.getElementById('hold-panel');
+    panel.innerHTML = 'Locking seats in Redis...';
+    try {
+      const headers = { 'Content-Type': 'application/json' };
+      if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+      const res = await fetch('/api/reserve/hold', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          eventId,
+          tierCode,
+          seatCount: 2,
+          unitPrice,
+          userId: currentUser.userId
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.detail || 'Failed to hold seats');
+      activeHold = data.hold;
+      panel.innerHTML = `
+        <div style="font-weight:700; color:var(--warn); margin-bottom:6px;">Hold ID: ${activeHold.holdId}</div>
+        <div style="font-size:0.85rem; margin-bottom:10px;">
+          Event: <strong>${activeHold.eventId}</strong> | Tier: <strong>${activeHold.tierCode}</strong><br/>
+          Seats: <strong>${activeHold.seatCount}</strong> | Total: <strong>₹${activeHold.totalAmount}</strong><br/>
+          Redis TTL: <strong>${data.expiresInSeconds} seconds</strong>
+        </div>
+        <button class="accent" onclick="checkoutHold('${activeHold.holdId}')">Pay Now & Issue QR Tickets</button>
+      `;
+    } catch (err) {
+      panel.innerHTML = `<div style="color:var(--accent);">Error: ${err.message}</div>`;
+    }
+  }
+
+  async function checkoutHold(holdId) {
+    const panel = document.getElementById('hold-panel');
+    try {
+      const res = await fetch('/api/bookings/checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          holdId,
+          userId: currentUser.userId,
+          paymentMethod: 'UPI'
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Checkout failed');
+      panel.innerHTML = `
+        <div style="color:var(--success); font-weight:700;">Booking Confirmed: ${data.booking.booking_id}</div>
+        <div style="font-size:0.85rem; margin-top:6px;">
+          Order saved to PostgreSQL & published to RabbitMQ! Waiting 2 seconds for <strong>ticket-worker</strong> to generate QR codes...
+        </div>
+      `;
+      await loadEvents();
+      setTimeout(loadBookings, 1500);
+    } catch (err) {
+      panel.innerHTML = `<div style="color:var(--accent);">Checkout Error: ${err.message}</div>`;
+    }
+  }
+
+  async function loadBookings() {
+    const container = document.getElementById('bookings-list');
+    try {
+      const res = await fetch(`/api/bookings/user/${currentUser.userId}`);
+      const bookings = await res.json();
+      if (!bookings.length) {
+        container.innerHTML = `<div class="card">No bookings found for user <strong>${currentUser.userId}</strong>.</div>`;
+        return;
+      }
+      container.innerHTML = bookings.map(b => `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <strong>${b.booking_id} (${b.event_id} - ${b.tier_code})</strong>
+            <span class="badge ${b.ticket_status === 'ISSUED' ? 'up' : ''}">${b.ticket_status}</span>
+          </div>
+          <div style="font-size:0.85rem; color:var(--muted); margin-top:4px;">
+            Seats: ${b.seat_count} • Paid: ₹${b.total_amount}
+          </div>
+          ${(b.tickets || []).map(t => `
+            <div class="qr-code">🎫 ${t.seat_number} → ${t.qr_code_payload}</div>
+          `).join('')}
+        </div>
+      `).join('');
+    } catch (err) {
+      container.innerHTML = `<div class="card">Error loading bookings: ${err.message}</div>`;
+    }
+  }
+
+  checkHealth();
+  loadEvents();
+  loadBookings();
+  setInterval(checkHealth, 15000);
+</script>
+</body>
+</html>
