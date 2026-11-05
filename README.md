@@ -4,26 +4,26 @@
 
 EventSphere is a **BookMyShow-style flash-sale concert ticketing platform** deployed across a **10-server distributed microservices architecture** on AWS. 
 
-Instead of running the entire application on a single monolithic server that crashes during high-traffic concert ticket drops, EventSphere decouples the frontend, business logic, caching, message queuing, and databases across **10 dedicated EC2 instances** communicating over a private AWS VPC network[cite: 6, 7, 8, 9].
+Instead of running the entire application on a single monolithic server that crashes during high-traffic concert ticket drops, EventSphere decouples the frontend, business logic, caching, message queuing, and databases across **10 dedicated EC2 instances** communicating over a private AWS VPC network.
 
 ---
 
 ## 🌟 How EventSphere Works (In Simple Layman Terms)
 
-Imagine thousands of fans trying to book tickets for **A.R. Rahman Live in Concert** at the exact same second[cite: 10, 11]. Here is how our 10 servers handle the rush without double-booking seats or slowing down:
+Imagine thousands of fans trying to book tickets for **A.R. Rahman Live in Concert** at the exact same second. Here is how our 10 servers handle the rush without double-booking seats or slowing down:
 
 1. **The Entrance Gate (`frontend` — Nginx 1.24):** 
-   When a fan opens `http://ravi-devops.space`, their browser only talks to the **Frontend Server** on Port `80`[cite: 6, 8, 10]. None of the backend services or databases are exposed to the public internet—Nginx acts as a reverse proxy that forwards `/api/*` requests safely inside our private AWS network[cite: 6].
+   When a fan opens `http://ravi-devops.space`, their browser only talks to the **Frontend Server** on Port `80`. None of the backend services or databases are exposed to the public internet—Nginx acts as a reverse proxy that forwards `/api/*` requests safely inside our private AWS network.
 2. **The Concert Catalog (`event-service` + `MongoDB 7.0`):** 
-   Displays live concerts (`EVT-1001`, `EVT-1002`, `EVT-1003`), stadium venues, seating tiers (`VIP`, `GOLD`, `SILVER`), pricing, and real-time remaining seat counts fetched from MongoDB[cite: 6, 10].
+   Displays live concerts (`EVT-1001`, `EVT-1002`, `EVT-1003`), stadium venues, seating tiers (`VIP`, `GOLD`, `SILVER`), pricing, and real-time remaining seat counts fetched from MongoDB.
 3. **The Fan Account Desk (`user-service` + `MongoDB 7.0` + `Redis 7.0`):** 
-   Manages user registration and password hashing (`bcrypt`). Upon login (e.g., user `USR-MW3BTL60`), it caches an active session token in **Redis memory** so other microservices can verify the user in sub-milliseconds[cite: 6, 10].
+   Manages user registration and password hashing (`bcrypt`). Upon login (e.g., user `USR-MW3BTL60`), it caches an active session token in **Redis memory** so other microservices can verify the user in sub-milliseconds.
 4. **The 10-Minute Seat Lock (`reservation-service` + `Redis 7.0`):** 
-   When a fan selects seats (such as 2 VIP seats for ₹9,998), `reservation-service` creates an atomic lock in **Redis** (e.g., `HOLD-73BB2E1EF4`) with a strict **600-second countdown timer (`TTL`)**[cite: 6, 11]. If payment is not completed within 10 minutes, Redis automatically expires the lock and releases the seats back to the public pool[cite: 6, 11].
+   When a fan selects seats (such as 2 VIP seats for ₹9,998), `reservation-service` creates an atomic lock in **Redis** (e.g., `HOLD-73BB2E1EF4`) with a strict **600-second countdown timer (`TTL`)**. If payment is not completed within 10 minutes, Redis automatically expires the lock and releases the seats back to the public pool.
 5. **The Checkout Cashier (`booking-service` + `PostgreSQL 16` + `RabbitMQ 3.13`):** 
-   When the user clicks **"Pay Now"**, `booking-service` verifies the Redis hold is still active, permanently deducts the seats in `event-service`, writes an ACID order record (`BKG-MW3K3GWX`) into **PostgreSQL**, clears the temporary hold, and publishes a `booking.paid` event to **RabbitMQ**[cite: 6, 11, 12].
+   When the user clicks **"Pay Now"**, `booking-service` verifies the Redis hold is still active, permanently deducts the seats in `event-service`, writes an ACID order record (`BKG-MW3K3GWX`) into **PostgreSQL**, clears the temporary hold, and publishes a `booking.paid` event to **RabbitMQ**.
 6. **The Background Ticket Printer (`ticket-worker` + `RabbitMQ 3.13` + `PostgreSQL 16`):** 
-   `ticket-worker` consumes the `booking.paid` message asynchronously from **RabbitMQ**, assigns individual seat numbers (`VIP-EC13`, `VIP-9D9A`), generates a tamper-proof **SHA-256 QR signature**, writes the tickets to PostgreSQL, and updates the booking status to **`ISSUED`**[cite: 6, 12].
+   `ticket-worker` consumes the `booking.paid` message asynchronously from **RabbitMQ**, assigns individual seat numbers (`VIP-EC13`, `VIP-9D9A`), generates a tamper-proof **SHA-256 QR signature**, writes the tickets to PostgreSQL, and updates the booking status to **`ISSUED`**.
 
 ---
 
@@ -97,42 +97,42 @@ flowchart LR
 ## 📸 Live AWS Infrastructure & Application Walkthrough
 
 ### 1. 10-Instance Distributed EC2 Cluster (`us-east-1c`)
-All 10 `t3.micro` RHEL 9 instances (`eventsphere-Mongodb`, `eventsphere-Reddis`, `Eventsphere-PostgreSQL`, `eventsphere-rabbitMQ`, `event-service`, `user-service`, `reservation-service`, `booking-service`, `ticket-worker`, and `frontent`) running in `us-east-1c` with **`3/3 status checks passed`**[cite: 7].
+All 10 `t3.micro` RHEL 9 instances (`eventsphere-Mongodb`, `eventsphere-Reddis`, `Eventsphere-PostgreSQL`, `eventsphere-rabbitMQ`, `event-service`, `user-service`, `reservation-service`, `booking-service`, `ticket-worker`, and `frontent`) running in `us-east-1c` with **`3/3 status checks passed`**.
 
 ![AWS EC2 Running Instances](screenshots/02-ec2-instances.png)
 
 ---
 
 ### 2. AWS Route 53 Private & Public DNS Resolution (`ravi-devops.space`)
-Instead of hardcoding IP addresses that change when servers restart, Route 53 maps `ravi-devops.space` (`18.234.215.0`) to the public Nginx gateway while routing all 9 backend and database subdomains (`*.ravi-devops.space`) across internal VPC private IPs (`172.31.x.x`) with a `1-second TTL`[cite: 8].
+Instead of hardcoding IP addresses that change when servers restart, Route 53 maps `ravi-devops.space` (`18.234.215.0`) to the public Nginx gateway while routing all 9 backend and database subdomains (`*.ravi-devops.space`) across internal VPC private IPs (`172.31.x.x`) with a `1-second TTL`.
 
 ![AWS Route53 Hosted Zone](screenshots/03-route53-dns.png)
 
 ---
 
 ### 3. Granular AWS Security Group Isolation (`vpc-0731ac1d2c4fe0ab7`)
-Every server tier is protected by its own dedicated Security Group (`eventsphere-PostgreSQL`, `reservation-service`, `user-service`, `eventsphere-rabbitmq`, `frontend`, `eventsphere-mongodb`, `eventsphere-reddis`, `event-service`, `booking-service`, `ticket-worker`), restricting inbound traffic strictly to required microservice ports[cite: 9].
+Every server tier is protected by its own dedicated Security Group (`eventsphere-PostgreSQL`, `reservation-service`, `user-service`, `eventsphere-rabbitmq`, `frontend`, `eventsphere-mongodb`, `eventsphere-reddis`, `event-service`, `booking-service`, `ticket-worker`), restricting inbound traffic strictly to required microservice ports.
 
 ![AWS Security Groups](screenshots/04-security-groups.png)
 
 ---
 
 ### 4. Live EventSphere Portal, Cluster Telemetry & Redis Auth Session
-Opening `http://ravi-devops.space` displays real-time health checks across all 5 backend services (`event-service`, `user-service`, `reservation-redis`, `booking-pg`, `ticket-worker-mq` all green), active user session **`ravi (USR-MW3BTL60)`** cached in Redis, and live concert inventory fetched from MongoDB (`EVT-1001` *A.R. Rahman*, `EVT-1002` *Coldplay*, `EVT-1003` *Sunburn Arena*)[cite: 10].
+Opening `http://ravi-devops.space` displays real-time health checks across all 5 backend services (`event-service`, `user-service`, `reservation-redis`, `booking-pg`, `ticket-worker-mq` all green), active user session **`ravi (USR-MW3BTL60)`** cached in Redis, and live concert inventory fetched from MongoDB (`EVT-1001` *A.R. Rahman*, `EVT-1002` *Coldplay*, `EVT-1003` *Sunburn Arena*).
 
 ![EventSphere Live Homepage](screenshots/05-frontend-home.png)
 
 ---
 
 ### 5. Flash-Sale 10-Minute Atomic Seat Lock in Redis (`HOLD-73BB2E1EF4`)
-Selecting 2 VIP seats for **A.R. Rahman Live in Concert - Symphony of Lights (`EVT-1001`)** triggers `reservation-service` to lock the seats in Redis (`HOLD-73BB2E1EF4`, `Tier: VIP • 2 Seats × ₹4,999 = ₹9,998`) with a live **`09:57`** countdown timer and UPI (`GPay / PhonePe`) checkout option[cite: 11].
+Selecting 2 VIP seats for **A.R. Rahman Live in Concert - Symphony of Lights (`EVT-1001`)** triggers `reservation-service` to lock the seats in Redis (`HOLD-73BB2E1EF4`, `Tier: VIP • 2 Seats × ₹4,999 = ₹9,998`) with a live **`09:57`** countdown timer and UPI (`GPay / PhonePe`) checkout option.
 
 ![Redis 10-Minute Seat Lock](screenshots/06-redis-seat-lock.png)
 
 ---
 
 ### 6. Transactional PostgreSQL Order & Async RabbitMQ QR M-Ticket (`BKG-MW3K3GWX`)
-Upon clicking **Pay Now**, `booking-service` commits order **`BKG-MW3K3GWX`** (`2 Seats • ₹9,998`) to PostgreSQL and publishes a `booking.paid` event to RabbitMQ[cite: 6, 12]. The Python `ticket-worker` consumes the message asynchronously, issues VIP seats **`VIP-EC13`** and **`VIP-9D9A`**, generates the SHA-256 cryptographic signature (`EVENTSPHERE|EVT-1001|BKG-MW3K3GWX|TKT-FE53908F|VIP-EC13|SIG:A9867297C76A08D20FDB990D`), updates the status to **`ISSUED`**, and renders the scannable M-Ticket QR code[cite: 12].
+Upon clicking **Pay Now**, `booking-service` commits order **`BKG-MW3K3GWX`** (`2 Seats • ₹9,998`) to PostgreSQL and publishes a `booking.paid` event to RabbitMQ. The Python `ticket-worker` consumes the message asynchronously, issues VIP seats **`VIP-EC13`** and **`VIP-9D9A`**, generates the SHA-256 cryptographic signature (`EVENTSPHERE|EVT-1001|BKG-MW3K3GWX|TKT-FE53908F|VIP-EC13|SIG:A9867297C76A08D20FDB990D`), updates the status to **`ISSUED`**, and renders the scannable M-Ticket QR code.
 
 ![Issued QR M-Ticket](screenshots/07-qr-mticket-rabbitmq.png)
 
