@@ -1,35 +1,35 @@
 # 🎟️ EventSphere — Distributed Concert Ticketing Microservices Platform
 
-**Domain:** `ravi-devops.space` | **Cloud:** AWS EC2 & Route53 | **OS:** RHEL 9 / AlmaLinux 9
+**Live Domain:** `http://ravi-devops.space` | **Cloud:** AWS EC2 (`us-east-1`) & Route 53 | **OS:** RHEL 9 / AlmaLinux 9
 
-EventSphere is a **BookMyShow-style flash-sale concert ticketing platform** built on a **10-server distributed microservices architecture** on AWS. 
+EventSphere is a **BookMyShow-style flash-sale concert ticketing platform** deployed across a **10-server distributed microservices architecture** on AWS. 
 
-Instead of running the entire website on a single server (which crashes when thousands of fans rush to buy concert tickets at the same time), EventSphere splits the workload across **10 specialized servers** communicating over a private AWS network.
+Instead of running the entire application on a single monolithic server that crashes during high-traffic concert ticket drops, EventSphere decouples the frontend, business logic, caching, message queuing, and databases across **10 dedicated EC2 instances** communicating over a private AWS VPC network[cite: 6, 7, 8, 9].
 
 ---
 
 ## 🌟 How EventSphere Works (In Simple Layman Terms)
 
-Imagine 50,000 fans trying to buy tickets for an **A.R. Rahman Live Concert** at 12:00 PM sharp. Here is how our 10 servers work together like a real stadium box office:
+Imagine thousands of fans trying to book tickets for **A.R. Rahman Live in Concert** at the exact same second[cite: 10, 11]. Here is how our 10 servers handle the rush without double-booking seats or slowing down:
 
-1. **The Entrance Gate (`frontend` — Nginx):** 
-   When you open `http://ravi-devops.space` on your phone or laptop, you only talk to the **Frontend Server** on Port `80`. For security, none of our backend servers or databases are exposed to the public internet—Nginx acts as a receptionist that forwards your requests safely inside our private AWS network.
-2. **The Concert Brochure (`event-service` + `MongoDB`):** 
-   Shows you all upcoming concerts, stadium venues, seating tiers (`VIP`, `GOLD`, `SILVER`), prices, and how many seats are currently left.
-3. **The Membership Desk (`user-service` + `MongoDB` + `Redis`):** 
-   Handles account sign-ups and logins. Once you log in, it saves a fast "wristband pass" (session token) in **Redis memory** so you don't have to log in again on every click.
-4. **The 10-Minute Seat Hold (`reservation-service` + `Redis`):** 
-   Have you ever noticed on BookMyShow that once you pick your seats, you get **10 minutes** to complete payment so nobody else steals your seats? Our `reservation-service` locks your chosen seats in **Redis** with a strict **600-second self-destruct timer (`TTL`)**. If you don't pay within 10 minutes, Redis automatically deletes the lock and gives the seats back to other fans!
-5. **The Cashier (`booking-service` + `PostgreSQL` + `RabbitMQ`):** 
-   When you click **"Pay Now"**, the `booking-service` double-checks that your 10-minute seat lock is still active, permanently deducts the seats from `event-service`, writes your payment receipt into **PostgreSQL** (a strict banking-grade SQL database), and drops a note into **RabbitMQ** saying *"Order Paid—Please print QR tickets!"*
-6. **The Ticket Printer (`ticket-worker` + `RabbitMQ` + `PostgreSQL`):** 
-   Generating cryptographic QR codes for multiple seats takes extra computing work. Instead of making the user wait on a spinning loading screen, `ticket-worker` picks up the note from **RabbitMQ** in the background, generates tamper-proof SHA-256 QR codes for each seat, and saves them to **PostgreSQL** so your digital M-Ticket appears on screen.
+1. **The Entrance Gate (`frontend` — Nginx 1.24):** 
+   When a fan opens `http://ravi-devops.space`, their browser only talks to the **Frontend Server** on Port `80`[cite: 6, 8, 10]. None of the backend services or databases are exposed to the public internet—Nginx acts as a reverse proxy that forwards `/api/*` requests safely inside our private AWS network[cite: 6].
+2. **The Concert Catalog (`event-service` + `MongoDB 7.0`):** 
+   Displays live concerts (`EVT-1001`, `EVT-1002`, `EVT-1003`), stadium venues, seating tiers (`VIP`, `GOLD`, `SILVER`), pricing, and real-time remaining seat counts fetched from MongoDB[cite: 6, 10].
+3. **The Fan Account Desk (`user-service` + `MongoDB 7.0` + `Redis 7.0`):** 
+   Manages user registration and password hashing (`bcrypt`). Upon login (e.g., user `USR-MW3BTL60`), it caches an active session token in **Redis memory** so other microservices can verify the user in sub-milliseconds[cite: 6, 10].
+4. **The 10-Minute Seat Lock (`reservation-service` + `Redis 7.0`):** 
+   When a fan selects seats (such as 2 VIP seats for ₹9,998), `reservation-service` creates an atomic lock in **Redis** (e.g., `HOLD-73BB2E1EF4`) with a strict **600-second countdown timer (`TTL`)**[cite: 6, 11]. If payment is not completed within 10 minutes, Redis automatically expires the lock and releases the seats back to the public pool[cite: 6, 11].
+5. **The Checkout Cashier (`booking-service` + `PostgreSQL 16` + `RabbitMQ 3.13`):** 
+   When the user clicks **"Pay Now"**, `booking-service` verifies the Redis hold is still active, permanently deducts the seats in `event-service`, writes an ACID order record (`BKG-MW3K3GWX`) into **PostgreSQL**, clears the temporary hold, and publishes a `booking.paid` event to **RabbitMQ**[cite: 6, 11, 12].
+6. **The Background Ticket Printer (`ticket-worker` + `RabbitMQ 3.13` + `PostgreSQL 16`):** 
+   `ticket-worker` consumes the `booking.paid` message asynchronously from **RabbitMQ**, assigns individual seat numbers (`VIP-EC13`, `VIP-9D9A`), generates a tamper-proof **SHA-256 QR signature**, writes the tickets to PostgreSQL, and updates the booking status to **`ISSUED`**[cite: 6, 12].
 
 ---
 
-## 🏗️ Complete Architecture Diagram (Inbound & Outbound Flow)
+## 🏗️ Complete Architecture Diagram (Inbound & Outbound Traffic Flow)
 
-> *GitHub automatically renders the vector diagram below with exact Inbound and Outbound arrows:*
+![EventSphere Mermaid Architecture](screenshots/01-architecture.png)
 
 ```mermaid
 flowchart LR
@@ -54,22 +54,17 @@ flowchart LR
         RMQ[["RabbitMQ 3.13\nrabbitmq.ravi-devops.space\nPort 5672 / 15672"]]
     end
 
-    %% Public User to Frontend
     User -->|"Inbound HTTP :80"| FE
-
-    %% Frontend Outbound to App Services (Port 8080)
     FE -->|"Proxy /api/events (:8080)"| EV
     FE -->|"Proxy /api/users (:8080)"| US
     FE -->|"Proxy /api/reserve (:8080)"| RS
     FE -->|"Proxy /api/bookings (:8080)"| BK
     FE -.->|"Health Check (:8080)"| WK
 
-    %% East-West Inter-Service Calls (Port 8080)
     RS -->|"Verify Auth Token (:8080)"| US
     BK -->|"1. Verify & Release Hold (:8080)"| RS
     BK -->|"2. Deduct Seat Inventory (:8080)"| EV
 
-    %% App Tier Outbound to Data Tier
     EV -->|"Read/Write Events (:27017)"| MONGO
     US -->|"Store User Profiles (:27017)"| MONGO
     US -->|"Cache Login Session (:6379)"| REDIS
@@ -82,122 +77,79 @@ flowchart LR
 
 ---
 
-## 🔄 Inbound vs. Outbound Network & Port Matrix (10 Servers)
+## 🔄 10-Server Inventory, DNS Mapping & Port Matrix
 
-Every server follows strict **Least-Privilege Security Group Rules**—only required ports are opened between specific servers:
+| # | Server Name | Route 53 DNS (`ravi-devops.space`) | VPC IP / Routing | Stack & Runtime | Inbound Port | Outbound Connections |
+| :- | :--- | :--- | :--- | :--- | :--- | :--- |
+| **01** | `eventsphere-Mongodb` | `mongodb.ravi-devops.space` | `172.31.20.231` | MongoDB `7.0` | `27017` | None *(NoSQL Store)* |
+| **02** | `eventsphere-Reddis` | `redis.ravi-devops.space` | `172.31.21.238` | Redis `7.0` | `6379` | None *(In-Memory Cache)* |
+| **03** | `Eventsphere-PostgreSQL` | `postgresql.ravi-devops.space` | `172.31.25.28` | PostgreSQL `16` | `5432` | None *(ACID SQL Ledger)* |
+| **04** | `eventsphere-rabbitMQ` | `rabbitmq.ravi-devops.space` | `172.31.16.129` | RabbitMQ `3.13` | `5672`, `15672` | None *(AMQP Broker)* |
+| **05** | `event-service` | `event.ravi-devops.space` | `172.31.22.86` | Node.js `20` (Express) | `8080` | `mongodb:27017` |
+| **06** | `user-service` | `user.ravi-devops.space` | `172.31.27.52` | Node.js `20` (Express) | `8080` | `mongodb:27017`, `redis:6379` |
+| **07** | `reservation-service` | `reservation.ravi-devops.space` | `172.31.25.167` | Python `3.11` (FastAPI) | `8080` | `redis:6379`, `user:8080` |
+| **08** | `booking-service` | `booking.ravi-devops.space` | `172.31.24.244` | Node.js `20` (Express) | `8080` | `reservation:8080`, `event:8080`, `postgresql:5432`, `rabbitmq:5672` |
+| **09** | `ticket-worker` | `worker.ravi-devops.space` | `172.31.28.33` | Python `3.11` (Pika) | `8080` | `rabbitmq:5672`, `postgresql:5432` |
+| **10** | `frontend` | `ravi-devops.space` / `frontend` | `18.234.215.0` | Nginx `1.24` + SPA | `80` | `event:8080`, `user:8080`, `reservation:8080`, `booking:8080`, `worker:8080` |
 
-| # | Server Name | Private DNS (`ravi-devops.space`) | Tech Stack | Inbound Traffic Allowed (Who Calls It?) | Outbound Traffic Made (Who Does It Call?) |
-| :- | :--- | :--- | :--- | :--- | :--- |
-| **01** | **MongoDB** | `mongodb.ravi-devops.space` | MongoDB `7.0` | **Port `27017`** from `event-service` & `user-service` | None *(Database Responder)* |
-| **02** | **Redis** | `redis.ravi-devops.space` | Redis `7.0` | **Port `6379`** from `user-service` & `reservation-service` | None *(In-Memory Cache Responder)* |
-| **03** | **PostgreSQL** | `postgresql.ravi-devops.space` | PostgreSQL `16` | **Port `5432`** from `booking-service` & `ticket-worker` | None *(SQL Ledger Responder)* |
-| **04** | **RabbitMQ** | `rabbitmq.ravi-devops.space` | RabbitMQ `3.13` | **Port `5672`** from `booking-service` & `ticket-worker`<br>**Port `15672`** from Admin IP | None *(Message Broker)* |
-| **05** | **Event Service** | `event.ravi-devops.space` | Node.js `20` (Express) | **Port `8080`** from `frontend` & `booking-service` | **Port `27017`** $\rightarrow$ `mongodb` |
-| **06** | **User Service** | `user.ravi-devops.space` | Node.js `20` (Express) | **Port `8080`** from `frontend` & `reservation-service` | **Port `27017`** $\rightarrow$ `mongodb`<br>**Port `6379`** $\rightarrow$ `redis` |
-| **07** | **Reservation Service** | `reservation.ravi-devops.space` | Python `3.11` (FastAPI) | **Port `8080`** from `frontend` & `booking-service` | **Port `6379`** $\rightarrow$ `redis`<br>**Port `8080`** $\rightarrow$ `user-service` |
-| **08** | **Booking Service** | `booking.ravi-devops.space` | Node.js `20` (Express) | **Port `8080`** from `frontend` | **Port `8080`** $\rightarrow$ `reservation-service`<br>**Port `8080`** $\rightarrow$ `event-service`<br>**Port `5432`** $\rightarrow$ `postgresql`<br>**Port `5672`** $\rightarrow$ `rabbitmq` |
-| **09** | **Ticket Worker** | `worker.ravi-devops.space` | Python `3.11` (Pika/FastAPI) | **Port `8080`** from `frontend` *(Health Check)* | **Port `5672`** $\rightarrow$ `rabbitmq`<br>**Port `5432`** $\rightarrow$ `postgresql` |
-| **10** | **Frontend** | `frontend.ravi-devops.space` | Nginx `1.24` + HTML5/JS | **Port `80` / `443`** from `0.0.0.0/0` *(Public Users)* | **Port `8080`** $\rightarrow$ `event`, `user`, `reservation`, `booking`, `worker` |
+---
+
+## 📸 Live AWS Infrastructure & Application Walkthrough
+
+### 1. 10-Instance Distributed EC2 Cluster (`us-east-1c`)
+All 10 `t3.micro` RHEL 9 instances (`eventsphere-Mongodb`, `eventsphere-Reddis`, `Eventsphere-PostgreSQL`, `eventsphere-rabbitMQ`, `event-service`, `user-service`, `reservation-service`, `booking-service`, `ticket-worker`, and `frontent`) running in `us-east-1c` with **`3/3 status checks passed`**[cite: 7].
+
+![AWS EC2 Running Instances](screenshots/02-ec2-instances.png)
+
+---
+
+### 2. AWS Route 53 Private & Public DNS Resolution (`ravi-devops.space`)
+Instead of hardcoding IP addresses that change when servers restart, Route 53 maps `ravi-devops.space` (`18.234.215.0`) to the public Nginx gateway while routing all 9 backend and database subdomains (`*.ravi-devops.space`) across internal VPC private IPs (`172.31.x.x`) with a `1-second TTL`[cite: 8].
+
+![AWS Route53 Hosted Zone](screenshots/03-route53-dns.png)
+
+---
+
+### 3. Granular AWS Security Group Isolation (`vpc-0731ac1d2c4fe0ab7`)
+Every server tier is protected by its own dedicated Security Group (`eventsphere-PostgreSQL`, `reservation-service`, `user-service`, `eventsphere-rabbitmq`, `frontend`, `eventsphere-mongodb`, `eventsphere-reddis`, `event-service`, `booking-service`, `ticket-worker`), restricting inbound traffic strictly to required microservice ports[cite: 9].
+
+![AWS Security Groups](screenshots/04-security-groups.png)
+
+---
+
+### 4. Live EventSphere Portal, Cluster Telemetry & Redis Auth Session
+Opening `http://ravi-devops.space` displays real-time health checks across all 5 backend services (`event-service`, `user-service`, `reservation-redis`, `booking-pg`, `ticket-worker-mq` all green), active user session **`ravi (USR-MW3BTL60)`** cached in Redis, and live concert inventory fetched from MongoDB (`EVT-1001` *A.R. Rahman*, `EVT-1002` *Coldplay*, `EVT-1003` *Sunburn Arena*)[cite: 10].
+
+![EventSphere Live Homepage](screenshots/05-frontend-home.png)
+
+---
+
+### 5. Flash-Sale 10-Minute Atomic Seat Lock in Redis (`HOLD-73BB2E1EF4`)
+Selecting 2 VIP seats for **A.R. Rahman Live in Concert - Symphony of Lights (`EVT-1001`)** triggers `reservation-service` to lock the seats in Redis (`HOLD-73BB2E1EF4`, `Tier: VIP • 2 Seats × ₹4,999 = ₹9,998`) with a live **`09:57`** countdown timer and UPI (`GPay / PhonePe`) checkout option[cite: 11].
+
+![Redis 10-Minute Seat Lock](screenshots/06-redis-seat-lock.png)
+
+---
+
+### 6. Transactional PostgreSQL Order & Async RabbitMQ QR M-Ticket (`BKG-MW3K3GWX`)
+Upon clicking **Pay Now**, `booking-service` commits order **`BKG-MW3K3GWX`** (`2 Seats • ₹9,998`) to PostgreSQL and publishes a `booking.paid` event to RabbitMQ[cite: 6, 12]. The Python `ticket-worker` consumes the message asynchronously, issues VIP seats **`VIP-EC13`** and **`VIP-9D9A`**, generates the SHA-256 cryptographic signature (`EVENTSPHERE|EVT-1001|BKG-MW3K3GWX|TKT-FE53908F|VIP-EC13|SIG:A9867297C76A08D20FDB990D`), updates the status to **`ISSUED`**, and renders the scannable M-Ticket QR code[cite: 12].
+
+![Issued QR M-Ticket](screenshots/07-qr-mticket-rabbitmq.png)
 
 ---
 
 ## 📂 Repository Structure & Step-by-Step Deployment Guides
 
-Click any service below to view its source code and step-by-step RHEL 9 server configuration guide:
-
-```text
-EventSphere/
-├── Database-Messaging/
-│   ├── MongoDB/
-│   │   ├── Mongodb.md               # 01. MongoDB 7.0 Setup Guide
-│   │   ├── Master-data.js           # Seed script for live concerts & seating tiers
-│   │   └── mongo.repo               # Official MongoDB 7.0 YUM repository
-│   ├── Redis/
-│   │   └── Redis.md                 # 02. Redis 7.0 Setup Guide
-│   ├── PostgreSQL/
-│   │   ├── Postgresql.md            # 03. PostgreSQL 16 Setup Guide
-│   │   └── init-bookings.sql        # ACID schema for bookings & QR tickets tables
-│   └── RabbitMQ/
-│       └── RabbitMQ.md              # 04. RabbitMQ 3.13 Message Broker Setup Guide
-│
-├── Services/
-│   ├── event-service/
-│   │   ├── event-service.md         # 05. Event Service Setup Guide (Node.js 20)
-│   │   ├── package.json
-│   │   ├── server.js
-│   │   └── .env.example
-│   ├── user-service/
-│   │   ├── user-service.md          # 06. User Service Setup Guide (Node.js 20)
-│   │   ├── package.json
-│   │   ├── server.js
-│   │   └── .env.example
-│   ├── reservation-service/
-│   │   ├── reservation-service.md   # 07. Reservation Service Setup Guide (Python 3.11)
-│   │   ├── requirements.txt
-│   │   ├── main.py
-│   │   └── .env.example
-│   ├── booking-service/
-│   │   ├── booking-service.md       # 08. Booking Service Setup Guide (Node.js 20)
-│   │   ├── package.json
-│   │   ├── server.js
-│   │   └── .env.example
-│   └── ticket-worker/
-│       ├── ticket-worker.md         # 09. Ticket Worker Setup Guide (Python 3.11)
-│       ├── requirements.txt
-│       ├── worker.py
-│       └── .env.example
-│
-├── frontend/
-│   ├── frontend.md                  # 10. Nginx 1.24 Reverse Proxy & UI Setup Guide
-│   ├── nginx.conf                   # Dynamic VPC DNS Reverse Proxy Config
-│   └── index.html                   # BookMyShow-Style Single Page Application
-│
-├── load balancer/                   # AWS ALB / Traffic Routing Documentation
-└── README.md                        # Project Overview & Architecture Documentation
-```
-
-### 🔗 Quick Links to Server Setup Documentation
-1. [01. MongoDB (`mongodb.ravi-devops.space`)](./Database-Messaging/MongoDB/Mongodb.md)
-2. [02. Redis (`redis.ravi-devops.space`)](./Database-Messaging/Redis/Redis.md)
-3. [03. PostgreSQL (`postgresql.ravi-devops.space`)](./Database-Messaging/PostgreSQL/Postgresql.md)
-4. [04. RabbitMQ (`rabbitmq.ravi-devops.space`)](./Database-Messaging/RabbitMQ/RabbitMQ.md)
+1. [01. MongoDB 7.0 (`mongodb.ravi-devops.space`)](./Database-Messaging/MongoDB/Mongodb.md)
+2. [02. Redis 7.0 (`redis.ravi-devops.space`)](./Database-Messaging/Redis/Redis.md)
+3. [03. PostgreSQL 16 (`postgresql.ravi-devops.space`)](./Database-Messaging/PostgreSQL/Postgresql.md)
+4. [04. RabbitMQ 3.13 (`rabbitmq.ravi-devops.space`)](./Database-Messaging/RabbitMQ/RabbitMQ.md)
 5. [05. Event Service (`event.ravi-devops.space`)](./Services/event-service/event-service.md)
 6. [06. User Service (`user.ravi-devops.space`)](./Services/user-service/user-service.md)
 7. [07. Reservation Service (`reservation.ravi-devops.space`)](./Services/reservation-service/reservation-service.md)
 8. [08. Booking Service (`booking.ravi-devops.space`)](./Services/booking-service/)
 9. [09. Ticket Worker (`worker.ravi-devops.space`)](./Services/ticket-worker/ticket-worker.md)
-10. [10. Frontend (`frontend.ravi-devops.space`)](./frontend/)
-
----
-
-## 📸 AWS Infrastructure & Live Application Screenshots
-
-### 1. 10-Instance AWS EC2 Cluster Running on RHEL 9
-![AWS EC2 Running Instances](screenshots/02-ec2-instances.png)
-
-### 2. AWS Route53 Private & Public DNS Records (`ravi-devops.space`)
-![AWS Route53 Hosted Zone](screenshots/03-route53-dns.png)
-
-### 3. AWS Security Group Port Isolation
-![AWS Security Groups](screenshots/04-security-groups.png)
-
-### 4. BookMyShow-Style Frontend & Live Cluster Telemetry
-![EventSphere Live Homepage](screenshots/05-frontend-home.png)
-
-### 5. Atomic 10-Minute Seat Lock in Redis (`TTL` Countdown)
-![Redis 10-Minute Seat Lock](screenshots/06-redis-seat-lock.png)
-
-### 6. Confirmed Booking & Asynchronous SHA-256 QR M-Ticket
-![Issued QR M-Ticket](screenshots/07-qr-mticket-rabbitmq.png)
-
----
-
-## 🛠️ Key DevOps & Production Engineering Highlights
-
-* **Process Isolation & Least Privilege:** Every application microservice runs under a dedicated non-login system account (`eventsphere` with `/sbin/nologin`) inside `/app`, managed as a `systemd` daemon with automatic crash recovery (`Restart=always`).
-* **Zero Startup Crash DNS Resolution:** Nginx is configured with the AWS VPC internal DNS resolver (`169.254.169.253 valid=10s`) and dynamic upstream variables so the web server never fails on boot if a backend microservice is restarting.
-* **Database Ownership by Microservice:** Schema migrations and seed data (`Master-data.js` for MongoDB and `init-bookings.sql` for PostgreSQL) are loaded remotely over the network by the owning microservice (`event-service` and `booking-service`), validating network paths and credentials during deployment.
-* **Full Observability:** Every service (including the background `ticket-worker`) exposes a live `/health` readiness probe on port `8080` that pings its underlying database/queue before reporting `"UP"` to the frontend telemetry bar.
+10. [10. Frontend Nginx Gateway (`frontend.ravi-devops.space`)](./frontend/)
 
 ---
 
@@ -206,4 +158,4 @@ EventSphere/
 **Bommali Ravi Kiran**  
 *Cloud & DevOps Engineer*  
 * **GitHub:** [ravikran14-b](https://github.com/ravikran14-b)
-* **Project Domain:** `ravi-devops.space`
+* **Domain:** `ravi-devops.space`
